@@ -1,13 +1,150 @@
-body { background-color: #0c0c0c; color: #00ff41; font-family: 'Courier New', monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
-#game-container { width: 95%; max-width: 900px; height: 85vh; border: 2px solid #00ff41; padding: 15px; display: flex; flex-direction: column; background: rgba(0, 0, 0, 0.9); box-shadow: 0 0 20px rgba(0, 255, 65, 0.2); }
-#output { flex-grow: 1; overflow-y: auto; white-space: pre-wrap; margin-bottom: 20px; font-size: 14px; line-height: 1.5; padding-right: 10px; }
-#output::-webkit-scrollbar { width: 8px; }
-#output::-webkit-scrollbar-thumb { background: #00ff41; }
-.input-area { display: flex; gap: 10px; border-top: 1px solid #00ff41; padding-top: 15px; }
-input { flex-grow: 1; background: transparent; border: 1px solid #00ff41; color: #00ff41; padding: 12px; outline: none; font-size: 16px; }
-button { background: #00ff41; color: black; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
-#stop-btn { background: #ff3333; } /* Červené tlačítko pro konec */
-button:hover { opacity: 0.8; }
-button:disabled { background: #004411; cursor: not-allowed; }
-.system-msg { color: #888; font-style: italic; margin: 10px 0; }
-.error-msg { color: #ff3333; font-weight: bold; }
+:root {
+    --neon-green: #00ff41;
+    --dark-bg: #050a05;
+    --terminal-overlay: rgba(0, 255, 65, 0.1);
+}
+
+body {
+    background-color: var(--dark-bg);
+    color: var(--neon-green);
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    text-shadow: 0 0 5px var(--neon-green);
+}
+
+/* CRT Scanlines & Overlay */
+.crt-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 100%),
+                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 10;
+    pointer-events: none;
+}
+
+.scanlines {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to bottom, transparent 50%, rgba(0, 255, 65, 0.02) 50%);
+    background-size: 100% 4px;
+    z-index: 11;
+    pointer-events: none;
+}
+
+/* Hlavní kontejner */
+#game-container {
+    width: 90%;
+    max-width: 1000px;
+    height: 80vh;
+    border: 1px solid var(--neon-green);
+    background: rgba(0, 20, 0, 0.85);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.1), inset 0 0 10px rgba(0, 255, 65, 0.1);
+    position: relative;
+    animation: container-entry 0.8s ease-out;
+}
+
+@keyframes container-entry {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--neon-green);
+    padding-bottom: 10px;
+}
+
+.status-blink {
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+#output {
+    flex-grow: 1;
+    overflow-y: auto;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    padding-right: 15px;
+    margin-bottom: 20px;
+}
+
+/* Custom Scrollbar */
+.custom-scroll::-webkit-scrollbar { width: 6px; }
+.custom-scroll::-webkit-scrollbar-thumb { background: var(--neon-green); box-shadow: 0 0 5px var(--neon-green); }
+
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 255, 65, 0.05);
+    border: 1px solid var(--neon-green);
+    padding: 5px 15px;
+}
+
+.prompt-char {
+    margin-right: 10px;
+    font-weight: bold;
+    animation: blink 0.8s infinite;
+}
+
+input {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    color: var(--neon-green);
+    padding: 15px 0;
+    font-family: inherit;
+    font-size: 1.1rem;
+    outline: none;
+}
+
+button {
+    background: transparent;
+    border: 1px solid var(--neon-green);
+    color: var(--neon-green);
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    margin-left: 10px;
+}
+
+button:hover {
+    background: var(--neon-green);
+    color: black;
+    box-shadow: 0 0 15px var(--neon-green);
+}
+
+#stop-btn {
+    border-color: #ff3333;
+    color: #ff3333;
+}
+
+#stop-btn:hover {
+    background: #ff3333;
+    color: white;
+    box-shadow: 0 0 15px #ff3333;
+}
+
+#lang-select {
+    background: transparent;
+    color: var(--neon-green);
+    border: 1px solid var(--neon-green);
+    padding: 5px;
+    margin-right: 10px;
+}

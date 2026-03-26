@@ -1,0 +1,81 @@
+body {
+    background-color: #0c0c0c;
+    color: #00ff41;
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+}
+
+#game-container {
+    width: 95%;
+    max-width: 900px;
+    height: 85vh;
+    border: 2px solid #00ff41;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.9);
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+}
+
+#output {
+    flex-grow: 1;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    padding-right: 10px;
+    text-shadow: 0 0 5px rgba(0, 255, 65, 0.5); /* Hakerská záře */
+}
+
+/* Stylový scrollbar */
+#output::-webkit-scrollbar { width: 8px; }
+#output::-webkit-scrollbar-thumb { background: #00ff41; border-radius: 4px; }
+
+.input-area {
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid #00ff41;
+    padding-top: 15px;
+}
+
+input {
+    flex-grow: 1;
+    background: transparent;
+    border: 1px solid #00ff41;
+    color: #00ff41;
+    padding: 12px;
+    font-family: inherit;
+    outline: none;
+    font-size: 16px;
+}
+
+button {
+    background: #00ff41;
+    color: black;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+button:hover {
+    background: #00cc33;
+    box-shadow: 0 0 10px #00ff41;
+}
+
+button:disabled {
+    background: #004411;
+    cursor: not-allowed;
+}
+
+.system-msg { color: #888; font-style: italic; margin: 10px 0; }
+.error-msg { color: #ff3333; font-weight: bold; }

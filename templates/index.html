@@ -3,29 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Labyrint v1.2</title>
+    <title>AI Labyrint v2.0</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <div class="crt-overlay"></div>
+    <div class="scanlines"></div>
 
-<div id="game-container">
-    <div class="header">
-        <span>[ AI GAME MASTER v1.2 ]</span>
-        <select id="lang-select">
-            <option value="cs">Čeština 🇨🇿</option>
-            <option value="en">English 🇺🇸</option>
-        </select>
+    <div id="game-container" class="terminal-glitch">
+        <div class="header">
+            <span class="status-blink">● SYSTEM ONLINE</span>
+            <div class="controls">
+                <select id="lang-select">
+                    <option value="cs">CZ 🇨🇿</option>
+                    <option value="en">EN 🇺🇸</option>
+                </select>
+                <button id="stop-btn">TERMINATE</button>
+            </div>
+        </div>
+        
+        <div id="output" class="custom-scroll">
+            <div class="intro-text">[ LOADING NEURAL INTERFACE... DONE ]</div>
+            [ SYSTEM ]: Inicializace dokončena. Zadejte 3 klíčová slova pro vygenerování simulace...
+        </div>
+        
+        <div class="input-wrapper">
+            <span class="prompt-char">></span>
+            <input type="text" id="user-input" placeholder="Čekám na vstup..." autofocus autocomplete="off">
+            <button id="send-btn">EXECUTE</button>
+        </div>
     </div>
-    
-    <div id="output">[ SYSTEM ]: Zadejte 3 slova pro začátek hry...</div>
-    
-    <div class="input-area">
-        <input type="text" id="user-input" placeholder="Zadejte slova nebo A, B, C..." autofocus autocomplete="off">
-        <button id="send-btn">HRÁT</button>
-        <button id="stop-btn">RESET</button>
-    </div>
-</div>
 
-<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

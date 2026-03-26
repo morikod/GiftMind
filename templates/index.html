@@ -3,31 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Labyrint v1.0</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>AI Labyrint v1.1</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
 <div id="game-container">
-    <div id="output">[ SYSTEM: AI GAME MASTER v1.0 ]
-Vítejte v AI Labyrintu. 
-Zadejte 3 slova (např. les, drak, meč) a začněte hru.
---------------------------</div>
-    <div id="game-container">
     <div id="output">[ SYSTEM: AI GAME MASTER v1.1 ]
-Zadejte 3 slova pro začátek příběhu...</div>
+Zadejte 3 slova (např. les, drak, meč) pro začátek hry.
+--------------------------</div>
     <div class="input-area">
-        <input type="text" id="user-input" placeholder="Zadejte slova nebo A, B, C..." autofocus>
+        <input type="text" id="user-input" placeholder="Zadejte slova nebo A, B, C..." autofocus autocomplete="off">
         <button id="send-btn">HRÁT</button>
-        <button id="stop-btn" style="background:#ff3333; color:white;">KONEC</button>
-    </div>
-</div>
-    <div class="input-area">
-        <input type="text" id="user-input" placeholder="Zadejte příkaz..." autofocus autocomplete="off">
-        <button id="send-btn">PROVÉST</button>
+        <button id="stop-btn">KONEC</button>
     </div>
 </div>
 
-<script src="/static/js/script.js"></script>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

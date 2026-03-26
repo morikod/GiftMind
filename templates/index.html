@@ -17,6 +17,23 @@ Zadejte 3 slova (např. les, drak, meč) pro začátek hry.
         <button id="send-btn">HRÁT</button>
         <button id="stop-btn">KONEC</button>
     </div>
+    <div id="game-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #00ff41; padding-bottom: 5px; margin-bottom: 10px;">
+        <span>[ AI GAME MASTER v1.2 ]</span>
+        <select id="lang-select" style="background: black; color: #00ff41; border: 1px solid #00ff41; cursor: pointer;">
+            <option value="cs">Čeština 🇨🇿</option>
+            <option value="en">English 🇺🇸</option>
+        </select>
+    </div>
+    
+    <div id="output">Zadejte 3 slova pro začátek hry...</div>
+    
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="A, B, C..." autofocus>
+        <button id="send-btn">HRÁT</button>
+        <button id="stop-btn">RESET</button>
+    </div>
+</div>
 </div>
 
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>

@@ -91,5 +91,29 @@ stopBtn.onclick = () => {
     setTimeout(() => location.reload(), 500);
 };
 
+function startBossFight() {
+    output.innerHTML += `<div class="boss-arena">BOSS FIGHT! Нажимай буквы: <span id="target-char">?</span></div>`;
+    let wins = 0;
+    const target = document.getElementById('target-char');
+    
+    function nextChar() {
+        if (wins >= 5) {
+            output.innerHTML += "<div>[ BOSS DEFEATED ]: Доступ восстановлен.</div>";
+            gameStarted = true; // Возвращаемся в игру
+            return;
+        }
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const randomChar = chars[Math.floor(Math.random() * chars.length)];
+        target.innerText = randomChar;
+    }
+
+    window.onkeydown = (e) => {
+        if (e.key.toUpperCase() === target.innerText) {
+            wins++;
+            nextChar();
+        }
+    };
+    nextChar();
+}
 btn.onclick = playGame;
 input.onkeypress = (e) => { if (e.key === 'Enter') playGame(); };

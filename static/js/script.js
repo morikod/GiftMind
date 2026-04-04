@@ -3,81 +3,95 @@ const input = document.getElementById('user-input');
 const btn = document.getElementById('send-btn');
 const stopBtn = document.getElementById('stop-btn');
 const langSelect = document.getElementById('lang-select');
+const fileInput = document.getElementById('file-input');
+const bossUi = document.getElementById('boss-ui');
 
 let gameStarted = false;
+let currentQuestionNum = 0;
 
-// Funkce pro plynulé vypisování textu
 async function typeWriter(text) {
     const div = document.createElement('div');
     div.className = 'ai-response';
     output.appendChild(div);
-    
-    // Rozdělíme na znaky pro efekt psacího stroje
     for (let char of text) {
         div.innerHTML += char;
         output.scrollTop = output.scrollHeight;
-        await new Promise(r => setTimeout(r, 10)); 
+        await new Promise(r => setTimeout(r, 15)); 
     }
 }
 
 async function playGame() {
     let rawText = input.value.trim();
-    if (!rawText) return;
+    if (!rawText && !gameStarted) return;
 
-    let processedText = rawText;
-    if (gameStarted) {
-        processedText = rawText.replace(/[^a-zA-Z]/g, "").toUpperCase();
-        if (!['A', 'B', 'C'].includes(processedText)) {
-            const errorMsg = document.createElement('div');
-            errorMsg.className = 'error-msg';
-            errorMsg.innerHTML = `\n> ${rawText}\n[ INVALID_INPUT ]: Vyberte A, B nebo C.`;
-            output.appendChild(errorMsg);
-            input.value = '';
-            return;
-        }
+    // Pokud hra běží, kontrolujeme formát odpovědi (A, B, C)
+    if (gameStarted && !['A', 'B', 'C'].includes(rawText.toUpperCase())) {
+        const errorMsg = document.createElement('div');
+        errorMsg.style.color = "#ff3333";
+        errorMsg.innerHTML = `> ${rawText}<br>[ ERROR ]: Zadejte pouze A, B nebo C.`;
+        output.appendChild(errorMsg);
+        input.value = '';
+        return;
     }
 
-    // Zobrazení vstupu uživatele
-    const userDiv = document.createElement('div');
-    userDiv.style.color = '#fff';
-    userDiv.innerHTML = `<br>> ${rawText}`;
-    output.appendChild(userDiv);
-
-    const isStart = !gameStarted;
-    const currentLang = langSelect.value;
-    
+    const processedText = rawText;
     input.value = '';
     input.disabled = true;
     btn.disabled = true;
 
-    // Animace načítání
     const loading = document.createElement('div');
-    loading.innerHTML = "[ COMMUNICATING WITH NEURAL NETWORK... ]";
+    loading.innerHTML = "[ SYNCING WITH TERMINAL... ]";
     output.appendChild(loading);
 
     try {
-        const response = await fetch('/api/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                prompt: processedText, 
-                is_start: isStart,
-                lang: currentLang 
-            })
-        });
+        let response;
+        if (!gameStarted) {
+            // PRVNÍ START - posíláme soubor přes FormData
+            const formData = new FormData();
+            formData.append('topic', processedText || "General Security");
+            if (fileInput.files[0]) {
+                formData.append('file', fileInput.files[0]);
+            }
+
+            response = await fetch('/api/start', {
+                method: 'POST',
+                body: formData // U FormData se neposílá Content-Type header manuálně
+            });
+        } else {
+            // DALŠÍ OTÁZKY - posíláme JSON
+            response = await fetch('/api/answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answer: processedText })
+            });
+        }
 
         const data = await response.json();
         loading.remove();
-        
-        await typeWriter(data.response);
-        
-        const line = document.createElement('div');
-        line.innerHTML = "------------------------------------------";
-        output.appendChild(line);
-        
-        gameStarted = true;
+
+        if (data.status === "game") {
+            gameStarted = true;
+            const q = data.data; // JSON s otázkou
+            const textToPrint = `\n[ OTÁZKA ${data.progress}/10 ]\n${q.q}\n\nA) ${q.a}\nB) ${q.b}\nC) ${q.c}`;
+            await typeWriter(textToPrint);
+        } 
+        else if (data.status === "boss_fight") {
+            await typeWriter("\n[ !!! ] SECURITY ALERT: Příliš mnoho chyb. Spouštím protiopatření...");
+            startBossFight();
+        }
+        else if (data.status === "win") {
+            await typeWriter(`\n[ ACCESS GRANTED ]: ${data.message}\n\nANALÝZA:\n${data.analysis || "Skvělý výkon, terminál ovládnut."}`);
+            gameStarted = false;
+        }
+        else if (data.status === "wrong") {
+            await typeWriter(`\n[ CHYBA ]: Nesprávná odpověď. Správně bylo: ${data.correct}.`);
+            // Po zobrazení chyby automaticky načteme další otázku (volitelné)
+            // nebo necháme uživatele něco napsat
+        }
+
     } catch (err) {
-        loading.innerHTML = "[ CRITICAL_ERROR ]: Připojení ztraceno.";
+        console.error(err);
+        loading.innerHTML = "[ CRITICAL_ERROR ]: Spojení s jádrem přerušeno.";
     } finally {
         input.disabled = false;
         btn.disabled = false;
@@ -86,20 +100,24 @@ async function playGame() {
     }
 }
 
-stopBtn.onclick = () => {
-    output.innerHTML = "[ SYSTEM SHUTDOWN ]";
-    setTimeout(() => location.reload(), 500);
-};
-
 function startBossFight() {
-    output.innerHTML += `<div class="boss-arena">BOSS FIGHT! Нажимай буквы: <span id="target-char">?</span></div>`;
+    bossUi.style.display = 'block';
+    input.disabled = true;
+    btn.disabled = true;
+    
     let wins = 0;
     const target = document.getElementById('target-char');
+    const progress = document.getElementById('boss-progress');
     
     function nextChar() {
         if (wins >= 5) {
-            output.innerHTML += "<div>[ BOSS DEFEATED ]: Доступ восстановлен.</div>";
-            gameStarted = true; // Возвращаемся в игру
+            bossUi.style.display = 'none';
+            input.disabled = false;
+            btn.disabled = false;
+            fetch('/api/boss_success', { method: 'POST' }).then(() => {
+                typeWriter("\n[ BOSS DEFEATED ]: Systém obnoven. Pokračujeme...");
+                // Tady by se měla načíst další otázka, ale pro jednoduchost počkáme na další input
+            });
             return;
         }
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -108,12 +126,21 @@ function startBossFight() {
     }
 
     window.onkeydown = (e) => {
-        if (e.key.toUpperCase() === target.innerText) {
-            wins++;
-            nextChar();
+        if (bossUi.style.display === 'block') {
+            if (e.key.toUpperCase() === target.innerText) {
+                wins++;
+                progress.innerText = `Sync: ${wins} / 5`;
+                nextChar();
+            }
         }
     };
     nextChar();
 }
+
 btn.onclick = playGame;
-input.onkeypress = (e) => { if (e.key === 'Enter') playGame(); };
+input.onkeydown = (e) => { if (e.key === 'Enter') playGame(); };
+
+stopBtn.onclick = () => {
+    output.innerHTML = "[ SYSTEM SHUTDOWN ]";
+    setTimeout(() => location.reload(), 800);
+};

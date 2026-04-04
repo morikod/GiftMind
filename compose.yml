@@ -1,13 +1,10 @@
 version: '3.8'
-
 services:
   app:
     build: .
-    container_name: labirint_ai_game
     ports:
-      - "5000:5000"
+      - "5000"
     environment:
-      - PORT=5000
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_BASE_URL=https://kurim.ithope.eu/v1
 

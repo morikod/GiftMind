@@ -2,3 +2,4 @@ flask
 openai
 httpx
 python-dotenv
+pypdf

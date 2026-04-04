@@ -7,7 +7,6 @@ from pypdf import PdfReader
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
-# Инициализация клиента
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
     base_url=os.environ.get("OPENAI_BASE_URL", "https://kurim.ithope.eu/v1"),
@@ -26,7 +25,7 @@ def extract_text(file):
             return text
         return file.read().decode('utf-8')
     except Exception as e:
-        print(f"Error extracting text: {e}")
+        print(f"Error: {e}")
         return ""
 
 @app.route("/")
@@ -41,9 +40,8 @@ def start_game():
     if 'file' in request.files:
         text_context = extract_text(request.files['file'])
     
-    topic = request.form.get("topic", "General IT Security")
+    topic = request.form.get("topic", "General IT")
     
-    # Создаем сессию
     sessions[user_id] = {
         "context": text_context[:3000], 
         "topic": topic,
@@ -51,23 +49,19 @@ def start_game():
         "errors": 0,
         "current_question": None
     }
-    
     return generate_question(user_id)
 
 def generate_question(user_id):
     session = sessions.get(user_id)
-    if not session:
-        return jsonify({"status": "error", "message": "Session expired. Reload page."})
-
     session["question_count"] += 1
     
     if session["question_count"] > 10:
-        return jsonify({"status": "win", "message": "TERMINAL BREACHED! You hacked the system."})
+        return jsonify({"status": "win", "message": "TERMINAL HACKED!"})
 
     system_prompt = (
-        "You are a Security Terminal. Generate a multiple-choice question (A, B, C) in Czech. "
-        f"Context: {session['context']}. Topic: {session['topic']}. "
-        "Return ONLY valid JSON: {\"q\": \"otázka\", \"a\": \"možnost\", \"b\": \"možnost\", \"c\": \"možnost\", \"correct\": \"A\"}"
+        "Jsi hackerský terminál. Generuj otázku (A, B, C) v češtině. "
+        f"Kontext: {session['context']}. Téma: {session['topic']}. "
+        "Vrať POUZE JSON: {\"q\": \"otázka\", \"a\": \"možnost\", \"b\": \"možnost\", \"c\": \"možnost\", \"correct\": \"A\"}"
     )
     
     try:
@@ -76,50 +70,44 @@ def generate_question(user_id):
             messages=[{"role": "system", "content": system_prompt}],
             response_format={ "type": "json_object" }
         )
-        
         q_data = json.loads(response.choices[0].message.content)
-        session["current_question"] = q_data # Сохраняем как объект
-        
-        return jsonify({
-            "status": "game", 
-            "data": q_data, 
-            "progress": session["question_count"]
-        })
-    except Exception as e:
-        print(f"AI Error: {e}")
-        return jsonify({"status": "error", "message": "AI failed to respond."})
+        session["current_question"] = q_data
+        return jsonify({"status": "game", "data": q_data, "progress": session["question_count"]})
+    except:
+        return jsonify({"status": "error"})
 
 @app.route("/api/answer", methods=["POST"])
 def check_answer():
     user_id = request.remote_addr
     data = request.json
-    if not data or 'answer' not in data:
-        return jsonify({"status": "error", "message": "No answer provided"})
-        
-    answer = data.get("answer").upper()
+    answer = data.get("answer", "").upper()
     session = sessions.get(user_id)
     
     if not session or not session.get("current_question"):
-        return jsonify({"status": "error", "message": "No active question"})
-    
+        return jsonify({"status": "error"})
+
     correct_answer = session["current_question"]["correct"].upper()
     
     if answer != correct_answer:
         session["errors"] += 1
         if session["errors"] >= 3:
-            return jsonify({"status": "boss_fight", "message": "SECURITY ALERT! Defeat the Boss to continue."})
-        return jsonify({"status": "wrong", "correct": correct_answer})
+            return jsonify({"status": "boss_fight"})
+        
+        # Ошибка? Сразу даем следующий вопрос, но с пометкой
+        next_q_resp = generate_question(user_id)
+        res = next_q_resp.get_json()
+        res["wrong_answer"] = True
+        res["last_correct"] = correct_answer
+        return jsonify(res)
     
     return generate_question(user_id)
 
 @app.route("/api/boss_success", methods=["POST"])
 def boss_success():
     user_id = request.remote_addr
-    session = sessions.get(user_id)
-    if session:
-        session["errors"] = 0
-        return jsonify({"status": "success"})
-    return jsonify({"status": "error"})
+    if user_id in sessions:
+        sessions[user_id]["errors"] = 0
+    return jsonify({"status": "ok"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

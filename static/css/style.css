@@ -1,146 +1,47 @@
-:root {
-    --bg-dark: #171717;
-    --sidebar-bg: #212121;
-    --accent: #10a37f; /* Zelená ve stylu ChatGPT */
-    --accent-hover: #0d8a6b;
-    --text: #ececec;
-    --text-dim: #9b9b9b;
-    --border: #333333;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
 body {
-    background: var(--bg-dark);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
+    margin: 0;
+    font-family: 'Segoe UI';
     display: flex;
-    height: 100vh;
-    overflow: hidden;
+    background: linear-gradient(135deg, #0f172a, #020617);
+    color: white;
 }
 
-/* Rozložení */
-.app-container {
-    display: flex;
-    width: 100%;
-}
-
-/* Boční panel */
 .sidebar {
     width: 260px;
-    background: var(--sidebar-bg);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
     padding: 15px;
 }
 
-.sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.sidebar-header h2 { font-size: 1.1rem; }
-
-.add-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 5px 10px;
-    border-radius: 5px;
+.sidebar div {
+    padding: 8px;
     cursor: pointer;
-    transition: 0.2s;
-}
-.add-btn:hover { background: var(--border); }
-
-.people-list { list-style: none; overflow-y: auto; }
-.person-item {
-    padding: 10px;
-    margin-bottom: 5px;
-    background: rgba(255,255,255,0.05);
     border-radius: 8px;
-    cursor: pointer;
-    transition: 0.2s;
 }
-.person-item:hover, .person-item.active { background: rgba(255,255,255,0.1); border-left: 3px solid var(--accent); }
 
-/* Hlavní sekce */
-.main-content {
+.sidebar div:hover {
+    background: #1e293b;
+}
+
+.main {
     flex: 1;
     display: flex;
     flex-direction: column;
 }
 
-.top-bar {
-    padding: 20px 40px;
-    border-bottom: 1px solid var(--border);
-    background: rgba(23, 23, 23, 0.9);
-}
-
-.content-scroll {
-    padding: 40px;
-    overflow-y: auto;
-    height: 100%;
-    max-width: 800px;
-    margin: 0 auto;
-    width: 100%;
-}
-
-/* Formulář */
-.form-grid { display: flex; flex-direction: column; gap: 20px; }
-.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-
-.input-group label { display: block; font-size: 0.9rem; color: var(--text-dim); margin-bottom: 8px; font-weight: 500; }
-input, select, textarea {
-    width: 100%;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: white;
-    padding: 12px;
-    font-size: 1rem;
-    font-family: inherit;
-}
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
-textarea { height: 80px; resize: none; }
-
-/* Tagy */
-.tag-category { font-size: 0.8rem; color: var(--accent); margin: 15px 0 5px 0; font-weight: bold; text-transform: uppercase; }
-.tags { display: flex; flex-wrap: wrap; gap: 8px; }
-.tag {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border);
-    padding: 6px 12px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: 0.2s;
-}
-.tag:hover { border-color: var(--accent); }
-.tag.active { background: var(--accent); color: white; border-color: var(--accent); }
-
-/* Tlačítko a výsledky */
-#magic-btn {
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 15px;
-    border-radius: 8px;
-    font-weight: bold;
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: 0.2s;
-    margin-top: 10px;
-}
-#magic-btn:hover { background: var(--accent-hover); }
-
-.results-grid { margin-top: 30px; display: grid; gap: 15px; }
-.gift-card {
-    background: rgba(255,255,255,0.03);
+#welcome {
     padding: 20px;
-    border-radius: 10px;
-    border-left: 4px solid var(--accent);
+    font-size: 22px;
+    opacity: 0.8;
 }
-.price-tag { color: var(--accent); font-weight: bold; font-size: 0.9rem; margin-bottom: 5px; }
+
+#chat {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.msg {
+    margin: 10px 0;
+    animation: fadeIn 0.4s ease;
+}

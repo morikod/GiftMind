@@ -2,12 +2,18 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gift Neural Architect</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1>Gift Neural <span>Architect</span></h1>
+        <header>
+            <h1>Gift Neural <span>Architect</span></h1>
+            <p>Inovativní analýza osobnosti pro výběr dárků bez klišé.</p>
+        </header>
+
         <div class="glass-card">
             <h3>Archetypy:</h3>
             <div class="tags">
@@ -15,13 +21,17 @@
                 <span class="tag" onclick="toggleTag(this)">#EkoMinimalista</span>
                 <span class="tag" onclick="toggleTag(this)">#Adrenalin</span>
                 <span class="tag" onclick="toggleTag(this)">#Estet</span>
+                <span class="tag" onclick="toggleTag(this)">#Kutil</span>
+                <span class="tag" onclick="toggleTag(this)">#Sběratel</span>
             </div>
-            <textarea id="desc" placeholder="Popište osobu..."></textarea>
+            
+            <textarea id="desc" placeholder="Popište osobu vlastními slovy... (např. co má rád, co nesnáší)"></textarea>
             <button id="magic-btn" onclick="startMagic()">GENEROVAT NÁPADY</button>
         </div>
+
         <div id="results" class="results-grid"></div>
     </div>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

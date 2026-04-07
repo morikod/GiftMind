@@ -1,71 +1,81 @@
-import os
-import psycopg2
-import redis
-import json
 from flask import Flask, render_template, request, jsonify
-from openai import OpenAI
+import os
 import httpx
+from openai import OpenAI
 
 app = Flask(__name__)
 
+# 🔑 берём из переменных окружения
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
     base_url=os.environ.get("OPENAI_BASE_URL"),
     http_client=httpx.Client(verify=False)
 )
 
-cache = redis.Redis(host=os.environ.get("REDIS_HOST", "cache"), port=6379)
+profiles = {}
 
-def init_db():
-    try:
-        conn = psycopg2.connect(os.environ.get("DATABASE_URL"))
-        cur = conn.cursor()
-        cur.execute('CREATE TABLE IF NOT EXISTS profiles (id SERIAL PRIMARY KEY, name TEXT, tags TEXT, description TEXT, history TEXT);')
-        conn.commit()
-        cur.close()
-        conn.close()
-    except Exception as e:
-        print(f"Chyba DB: {e}")
-
-init_db()
-
-@app.route("/")
+@app.route('/')
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
 
-@app.route("/api/generate", methods=["POST"])
-def generate():
+@app.route('/create_profile', methods=['POST'])
+def create_profile():
     data = request.json
-    tags = data.get("tags", [])
-    description = data.get("description", "")
-    budget = data.get("budget", "Nezadáno")
-    occasion = data.get("occasion", "Nespecifikováno")
-    
-    
-    system_prompt = (
-        "Jsi expert na výběr dárků. Tvé návrhy musí být PRAKTICKÉ, REALISTICKÉ a REÁLNĚ KOUPITELNÉ. "
-        "ZÁKAZ navrhovat dárky typu 'vyrob si sám', 'namaluj obraz', 'vytvoř puzzle'. "
-        "Pokud uživatel hraje hry (např. Dota 2, CS:GO), navrhni in-game měnu, skiny, Steam dárkové karty nebo herní hardware. "
-        "Pokud má rád anime, navrhni konkrétní figurky (Funko Pop, Nendoroid), mangu, nebo předplatné Crunchyroll. "
-        "Musíš respektovat zadaný ROZPOČET. "
-        "Odpovídej v češtině. Vrať striktně JSON: {'gifts': [{'title': 'Název', 'reason': 'Proč je to super', 'price': 'Odhad ceny'}]}"
-    )
-    
-    user_prompt = f"Příležitost: {occasion}. Rozpočet: {budget}. Tagy: {', '.join(tags)}. Popis: {description}. Navrhni 3 reálné dárky ke koupi."
+    profiles[data['name']] = data
+    return jsonify({"status": "ok"})
+
+@app.route('/get_profiles')
+def get_profiles():
+    return jsonify(profiles)
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.json
+    user_message = data.get('message')
+    profile = data.get('profile')
+
+    if not profile:
+        return jsonify({"response": "Nejdřív vyber profil."})
+
+    # 🧠 СИЛЬНЫЙ ПРОМПТ
+    system_prompt = f"""
+Jsi kreativní AI specialista na dárky.
+
+Tvoje úkoly:
+- Navrhnout ORIGINÁLNÍ a NEBANÁLNÍ dárek
+- Vyhnout se věcem jako: kniha, puzzle, hrnek
+- Myslet logicky a kreativně
+- Můžeš navrhnout zážitek, DIY, personalizaci
+
+Profil osoby:
+Jméno: {profile.get('name')}
+Zájmy: {profile.get('tags')}
+Popis: {profile.get('desc')}
+Rozpočet: {profile.get('budget')} Kč
+Příležitost: {profile.get('reason')}
+
+Odpověď:
+- krátká
+- konkrétní
+- 2–4 návrhy
+"""
 
     try:
         response = client.chat.completions.create(
             model="gemma3:27b",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format={"type": "json_object"}
+                {"role": "user", "content": user_message}
+            ]
         )
-        return response.choices[0].message.content
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+        ai_text = response.choices[0].message.content
+
+    except Exception as e:
+        ai_text = f"Chyba AI: {str(e)}"
+
+    return jsonify({"response": ai_text})
+
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

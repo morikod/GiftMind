@@ -2,32 +2,77 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <title>CyberTerm RAG v2</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift Neural Architect</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="crt-overlay"></div>
-    <div id="game-container">
-        <div id="output" class="custom-scroll">
-            <div>[ LOADING NEURAL INTERFACE... DONE ]</div>
-            <div>[ SYSTEM ]: Inicializace dokončena.</div>
-            <div>1. Nahrajte PDF (nepovinné).</div>
-            <div>2. Napište téma a stiskněte EXECUTE.</div>
+    <div class="container">
+        <header>
+            <h1>Gift Neural <span>Architect</span></h1>
+            <p>Inovativní analýza osobnosti pro výběr dárků bez klišé.</p>
+        </header>
+
+        <div class="glass-card">
+            <h3>Vyberte archetypy:</h3>
+            <div id="tag-container" class="tags">
+                <span class="tag" onclick="toggleTag(this)">#TechnoGamer</span>
+                <span class="tag" onclick="toggleTag(this)">#EkoMinimalista</span>
+                <span class="tag" onclick="toggleTag(this)">#Adrenalin</span>
+                <span class="tag" onclick="toggleTag(this)">#Estet</span>
+                <span class="tag" onclick="toggleTag(this)">#Kutil</span>
+                <span class="tag" onclick="toggleTag(this)">#Sběratel</span>
+            </div>
+            
+            <textarea id="desc" placeholder="Popište osobu vlastními slovy..."></textarea>
+            <button id="magic-btn" onclick="startMagic()">GENEROVAT ARCHITEKTURU DÁRKU</button>
         </div>
 
-        <div id="boss-ui" style="display:none;">
-            <div class="boss-title">!!! SECURITY BOSS !!!</div>
-            <div id="target-char">?</div>
-            <div id="boss-progress">Sync: 0 / 5</div>
-        </div>
-        
-        <div class="input-wrapper">
-            <input type="file" id="file-input" style="display:none">
-            <button onclick="document.getElementById('file-input').click()">UPLOAD</button>
-            <input type="text" id="user-input" placeholder="Téma nebo A/B/C..." autofocus>
-            <button id="send-btn">EXECUTE</button>
-        </div>
+        <div id="results" class="results-grid"></div>
     </div>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+    <script>
+        let selectedTags = [];
+
+        function toggleTag(el) {
+            el.classList.toggle('active');
+            const tag = el.innerText;
+            if (selectedTags.includes(tag)) {
+                selectedTags = selectedTags.filter(t => t !== tag);
+            } else {
+                selectedTags.push(tag);
+            }
+        }
+
+        async function startMagic() {
+            const btn = document.getElementById('magic-btn');
+            const results = document.getElementById('results');
+            btn.innerText = "Analyzuji neurální sítě...";
+            
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    tags: selectedTags,
+                    description: document.getElementById('desc').value
+                })
+            });
+            
+            const data = await response.json();
+            results.innerHTML = '';
+            
+            data.gifts.forEach(gift => {
+                results.innerHTML += `
+                    <div class="gift-card">
+                        <div class="vibe">${gift.vibe}</div>
+                        <h4>${gift.title}</h4>
+                        <p>${gift.reason}</p>
+                    </div>
+                `;
+            });
+            btn.innerText = "GENEROVAT DALŠÍ ARCHITEKTURU";
+        }
+    </script>
 </body>
 </html>

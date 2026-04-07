@@ -1,20 +1,29 @@
 services:
-  app:
-    build: .
+  frontend:
+    build: 
+      context: ./frontend
     ports:
-      - "5000"
+      - "${PORT}"
     environment:
-      - DATABASE_URL=postgresql://user:heslo@db:5432/gift_db
-      - REDIS_HOST=cache
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - OPENAI_API_KEY=sk-kityG9hHVEn_6dbbntcI3A
       - OPENAI_BASE_URL=https://kurim.ithope.eu/v1
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/gift_db
+      - OPENAI_API_KEY=sk-kityG9hHVEn_6dbbntcI3A
+      - OPENAI_BASE_URL=https://kurim.ithope.eu/v1
+    depends_on:
+      - db
 
   db:
     image: postgres:16-alpine
     environment:
       - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=heslo
+      - POSTGRES_PASSWORD=password
       - POSTGRES_DB=gift_db
-
-  cache:
-    image: redis:7-alpine

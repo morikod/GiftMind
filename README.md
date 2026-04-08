@@ -11,7 +11,7 @@
 
 Tento projekt představuje interaktivní platformu, kde se schopnosti AI setkávají s klasickými logickými úlohami. Využíváme sémantické vyhledávání a vektorové reprezentace pro optimalizaci tras a analýzu struktur.
 
-**Vyzkoušet online:** [denys-voloshyn.kurim.ithope.eu](https://denys-voloshyn.kurim.ithope.eu/)
+
 
 ### Klíčové vlastnosti:
 * **Inteligentní vyhledávání:** Využití vektorových databází pro ukládání a porovnávání tras.
@@ -63,8 +63,8 @@ Projekt podporuje rozšíření funkcionality pomocí pluginů pro lokální jaz
 
 Pokud máte dotazy nebo návrhy na vylepšení projektu:
 
-* **Autor:** Denys Voloshyn
-* **Web:** [ithope.eu](https://denys-voloshyn.kurim.ithope.eu/)
+
+
 * **GitHub:** [@morikod](https://github.com/morikod)
 
 ---

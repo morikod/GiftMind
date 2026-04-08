@@ -1,13 +1,13 @@
 const App = (() => {
 
-  // ── Stav ──────────────────────────────────────────────
   let currentScreen = 'screen-landing';
   let previousScreen = 'screen-landing';
-  let messages = [];          // [{role, content}]
-  let activeProfile = null;   // objekt profilu
-  let profiles = [];          // načtené profily
+  let messages = [];
+  let activeProfile = null;
+  let profiles = [];
   let starRating = 0;
   let sidebarOpen = false;
+  let pendingDeleteId = null;
 
   const TAGS = [
     '🎮 Hry', '⚽ Sport', '🎵 Hudba', '📚 Knihy', '🎬 Filmy', '🍕 Vaření',
@@ -17,12 +17,12 @@ const App = (() => {
     '🏔️ Turistika', '🎲 Společenské hry',
   ];
 
-  // ── Inicializace ───────────────────────────────────────
+  // ── Init ───────────────────────────────────────────────
   function init() {
     buildTagGrid();
     loadProfiles();
-    const greeting = 'Ahoj! Jsem Labyrint 🎁 Pomůžu ti najít dokonalý dárek. Chceš rychle vybrat hned teď, nebo vytvoříme profil příjemce pro přesnější doporučení?';
-    typewriterEffect('greeting-text', greeting, 35, () => {
+    const greeting = 'Ahoj! Jsem GiftMind 🎁 Pomůžu ti najít dokonalý dárek. Chceš rychle vybrat hned teď, nebo vytvoříme profil příjemce pro přesnější doporučení?';
+    typewriterEffect('greeting-text', greeting, 30, () => {
       document.getElementById('landing-buttons').classList.remove('hidden');
     });
   }
@@ -38,13 +38,27 @@ const App = (() => {
     }, speed);
   }
 
-  // ── Obrazovky ──────────────────────────────────────────
+  // ── Toast ──────────────────────────────────────────────
+  function toast(msg, duration = 2800) {
+    let el = document.getElementById('toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'toast';
+      el.className = 'toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), duration);
+  }
+
+  // ── Screens ────────────────────────────────────────────
   function showScreen(id) {
     previousScreen = currentScreen;
     document.getElementById(currentScreen).classList.remove('active');
     currentScreen = id;
-    const el = document.getElementById(id);
-    el.classList.add('active');
+    document.getElementById(id).classList.add('active');
     if (id === 'screen-history') loadHistory();
   }
 
@@ -71,7 +85,7 @@ const App = (() => {
     sb.classList.toggle('open', sidebarOpen);
   }
 
-  // ── Tagy ───────────────────────────────────────────────
+  // ── Tags ───────────────────────────────────────────────
   function buildTagGrid() {
     const grid = document.getElementById('tag-grid');
     if (!grid) return;
@@ -89,13 +103,13 @@ const App = (() => {
     return [...document.querySelectorAll('.tag-chip.selected')].map(c => c.textContent);
   }
 
-  // ── Profily ────────────────────────────────────────────
+  // ── Profiles ───────────────────────────────────────────
   async function loadProfiles() {
     try {
       const res = await fetch('/api/profiles');
       profiles = await res.json();
       renderProfileList();
-    } catch (e) { profiles = []; }
+    } catch { profiles = []; }
   }
 
   function renderProfileList() {
@@ -108,27 +122,64 @@ const App = (() => {
     profiles.forEach(p => {
       const card = document.createElement('div');
       card.className = 'profile-card' + (activeProfile?.id === p.id ? ' active' : '');
-      card.innerHTML = `<div class="profile-card-name">${p.name}</div>
-        <div class="profile-card-meta">${p.relation || ''} ${p.age ? '· ' + p.age + ' let' : ''}</div>`;
+      card.innerHTML = `
+        <div class="profile-card-name">${escHtml(p.name)}</div>
+        <div class="profile-card-meta">${escHtml(p.relation || '')}${p.age ? ' · ' + p.age + ' let' : ''}</div>
+        <div class="profile-card-actions">
+          <button class="btn-chat-small" onclick="event.stopPropagation();App.selectProfile(${JSON.stringify(JSON.stringify(p))})">💬 Chat</button>
+          <button class="btn-delete" onclick="event.stopPropagation();App.askDelete('${p.id}')">🗑️ Smazat</button>
+        </div>`;
       card.onclick = () => selectProfile(p);
       list.appendChild(card);
     });
   }
 
-  function selectProfile(p) {
+  function selectProfile(pOrJson) {
+    const p = typeof pOrJson === 'string' ? JSON.parse(pOrJson) : pOrJson;
     activeProfile = p;
     messages = [];
     document.getElementById('active-profile-name').textContent = p.name;
-    document.getElementById('active-profile-badge').textContent = p.relation || '';
-    document.getElementById('active-profile-badge').classList.remove('hidden');
+    const badge = document.getElementById('active-profile-badge');
+    badge.textContent = p.relation || '';
+    badge.classList.toggle('hidden', !p.relation);
     document.getElementById('btn-save-gift').classList.remove('hidden');
     renderProfileList();
     showScreen('screen-chat');
     clearMessages();
     if (sidebarOpen) toggleSidebar();
     setTimeout(() => {
-      appendAiMessage(`Výborně! Mám profil pro **${p.name}**. K jaké příležitosti hledáš dárek a jaký je tvůj přibližný rozpočet?`);
+      appendAiMessage(`Výborně! Mám profil pro **${escHtml(p.name)}**. K jaké příležitosti hledáš dárek a jaký je tvůj přibližný rozpočet?`);
     }, 300);
+  }
+
+  // ── Delete profile ─────────────────────────────────────
+  function askDelete(id) {
+    pendingDeleteId = id;
+    document.getElementById('modal-confirm').classList.remove('hidden');
+  }
+
+  function closeConfirm() {
+    pendingDeleteId = null;
+    document.getElementById('modal-confirm').classList.add('hidden');
+  }
+
+  async function confirmDelete() {
+    if (!pendingDeleteId) return;
+    try {
+      await fetch(`/api/profile/${pendingDeleteId}`, { method: 'DELETE' });
+      profiles = profiles.filter(p => p.id !== pendingDeleteId);
+      if (activeProfile?.id === pendingDeleteId) {
+        activeProfile = null;
+        document.getElementById('active-profile-name').textContent = 'Rychlý režim';
+        document.getElementById('active-profile-badge').classList.add('hidden');
+        document.getElementById('btn-save-gift').classList.add('hidden');
+      }
+      renderProfileList();
+      toast('✅ Profil byl smazán');
+    } catch {
+      toast('❌ Chyba při mazání');
+    }
+    closeConfirm();
   }
 
   async function saveProfile() {
@@ -156,8 +207,17 @@ const App = (() => {
       const data = await res.json();
       profiles.push(data.profile);
       renderProfileList();
+      // reset form
+      document.getElementById('p-name').value = '';
+      document.getElementById('p-age').value = '';
+      document.getElementById('p-gender').value = '';
+      document.getElementById('p-relation').value = '';
+      document.getElementById('p-custom-interests').value = '';
+      document.getElementById('p-notes').value = '';
+      document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('selected'));
       selectProfile(data.profile);
-    } catch (e) {
+      toast('✅ Profil uložen!');
+    } catch {
       alert('Chyba při ukládání profilu.');
     }
   }
@@ -172,9 +232,7 @@ const App = (() => {
     const box = document.getElementById('chat-messages');
     const div = document.createElement('div');
     div.className = 'msg ai';
-    div.innerHTML = `
-      <div class="msg-avatar">🎁</div>
-      <div class="msg-bubble">${formatText(text)}</div>`;
+    div.innerHTML = `<div class="msg-avatar">🎁</div><div class="msg-bubble">${formatText(text)}</div>`;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
   }
@@ -194,8 +252,7 @@ const App = (() => {
     div.className = 'msg ai'; div.id = 'typing-indicator';
     div.innerHTML = `<div class="msg-avatar">🎁</div>
       <div class="msg-bubble"><div class="typing-dots">
-        <span></span><span></span><span></span>
-      </div></div>`;
+        <span></span><span></span><span></span></div></div>`;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
   }
@@ -209,13 +266,11 @@ const App = (() => {
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
     if (!text) return;
-
     input.value = '';
     input.style.height = 'auto';
     appendUserMessage(text);
     messages.push({ role: 'user', content: text });
     showTyping();
-
     try {
       const res = await fetch('/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -225,7 +280,7 @@ const App = (() => {
       removeTyping();
       appendAiMessage(data.reply);
       messages.push({ role: 'assistant', content: data.reply });
-    } catch (e) {
+    } catch {
       removeTyping();
       appendAiMessage('Omlouvám se, nastala chyba připojení. Zkus to prosím znovu.');
     }
@@ -233,16 +288,12 @@ const App = (() => {
 
   function handleKey(e) {
     const input = document.getElementById('chat-input');
-    // auto-resize
     input.style.height = 'auto';
     input.style.height = input.scrollHeight + 'px';
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   }
 
-  // ── Uložit dárek ──────────────────────────────────────
+  // ── Save gift ──────────────────────────────────────────
   function showSaveGift() {
     starRating = 0;
     renderStars();
@@ -255,10 +306,7 @@ const App = (() => {
     document.getElementById('modal-save-gift').classList.add('hidden');
   }
 
-  function setStar(v) {
-    starRating = v;
-    renderStars();
-  }
+  function setStar(v) { starRating = v; renderStars(); }
 
   function renderStars() {
     document.querySelectorAll('#sg-stars .star').forEach(s => {
@@ -269,7 +317,6 @@ const App = (() => {
   async function confirmSaveGift() {
     const name = document.getElementById('sg-name').value.trim();
     if (!name) { alert('Zadej název dárku.'); return; }
-
     const gift = {
       name,
       occasion: document.getElementById('sg-occasion').value,
@@ -279,24 +326,18 @@ const App = (() => {
       profile_id: activeProfile?.id || null,
       profile_name: activeProfile?.name || 'Bez profilu',
     };
-
     try {
       await fetch('/api/gift', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(gift),
       });
       closeModal();
-      appendAiMessage(`✅ Dárek **${name}** byl uložen do historie! Chceš hledat další dárek, nebo s tím mohu nějak dál pomoci?`);
-    } catch (e) {
-      alert('Chyba při ukládání.');
-    }
+      toast('🎁 Dárek uložen do historie!');
+      appendAiMessage(`✅ Dárek **${escHtml(name)}** uložen! Chceš hledat další?`);
+    } catch { alert('Chyba při ukládání.'); }
   }
 
-  // ── Historie ───────────────────────────────────────────
-  async function showHistory() {
-    showScreen('screen-history');
-  }
-
+  // ── History ────────────────────────────────────────────
   async function loadHistory() {
     const list = document.getElementById('history-list');
     list.innerHTML = '<div class="empty-state">Načítám…</div>';
@@ -304,7 +345,7 @@ const App = (() => {
       const res = await fetch('/api/gifts');
       const gifts = await res.json();
       if (!gifts.length) {
-        list.innerHTML = '<div class="empty-state">Zatím žádné uložené dárky.</div>';
+        list.innerHTML = '<div class="empty-state">Zatím žádné uložené dárky. 🎁</div>';
         return;
       }
       list.innerHTML = '';
@@ -314,23 +355,41 @@ const App = (() => {
         const card = document.createElement('div');
         card.className = 'history-card';
         card.innerHTML = `
-          <div class="history-card-title">${escHtml(g.name)}</div>
-          <div class="history-card-meta">
-            <span>📅 ${date}</span>
-            <span>🎉 ${g.occasion || '—'}</span>
-            ${g.budget ? `<span>💰 ${g.budget} Kč</span>` : ''}
-            ${g.profile_name ? `<span>👤 ${escHtml(g.profile_name)}</span>` : ''}
-          </div>
-          ${g.my_rating ? `<div class="history-stars">${stars}</div>` : ''}
-          ${g.my_comment ? `<div style="font-size:.85rem;color:var(--text2);margin-top:6px">${escHtml(g.my_comment)}</div>` : ''}`;
+          <div class="history-card-header">
+            <div>
+              <div class="history-card-title">${escHtml(g.name)}</div>
+              <div class="history-card-meta">
+                <span>📅 ${date}</span>
+                <span>🎉 ${g.occasion || '—'}</span>
+                ${g.budget ? `<span>💰 ${g.budget} Kč</span>` : ''}
+                ${g.profile_name ? `<span>👤 ${escHtml(g.profile_name)}</span>` : ''}
+              </div>
+              ${g.my_rating ? `<div class="history-stars">${stars}</div>` : ''}
+              ${g.my_comment ? `<div style="font-size:.85rem;color:var(--text2);margin-top:6px">${escHtml(g.my_comment)}</div>` : ''}
+            </div>
+            <button class="btn-delete" style="flex-shrink:0"
+              onclick="App.deleteGift('${g.id}', this)">🗑️</button>
+          </div>`;
         list.appendChild(card);
       });
-    } catch (e) {
+    } catch {
       list.innerHTML = '<div class="empty-state">Nepodařilo se načíst historii.</div>';
     }
   }
 
-  // ── Pomocné funkce ─────────────────────────────────────
+  async function deleteGift(id, btn) {
+    btn.disabled = true;
+    try {
+      await fetch(`/api/gift/${id}`, { method: 'DELETE' });
+      btn.closest('.history-card').remove();
+      toast('🗑️ Dárek smazán');
+      const list = document.getElementById('history-list');
+      if (!list.children.length)
+        list.innerHTML = '<div class="empty-state">Zatím žádné uložené dárky. 🎁</div>';
+    } catch { btn.disabled = false; toast('❌ Chyba při mazání'); }
+  }
+
+  // ── Helpers ────────────────────────────────────────────
   function formatText(t) {
     return escHtml(t)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -343,11 +402,14 @@ const App = (() => {
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  // ── Public API ─────────────────────────────────────────
-  return { init, showScreen, goBack, startQuick, toggleSidebar,
-           saveProfile, sendMessage, handleKey,
-           showSaveGift, closeModal, setStar, confirmSaveGift,
-           showHistory };
+  return {
+    init, showScreen, goBack, startQuick, toggleSidebar,
+    saveProfile, selectProfile,
+    askDelete, closeConfirm, confirmDelete,
+    sendMessage, handleKey,
+    showSaveGift, closeModal, setStar, confirmSaveGift,
+    loadHistory, deleteGift,
+  };
 })();
 
 document.addEventListener('DOMContentLoaded', App.init);

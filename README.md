@@ -27,37 +27,44 @@
 
 ### Instalace
 
-```bashgit clone https://github.com/morikod/GiftMind.git
-
+```bash
+git clone https://github.com/morikod/GiftMind.git
 cd GiftMind
 pip install -r requirements.txt
 ```
+
 ### Konfigurace
 
 Vytvoř soubor `.env` (nikdy jej nepřidávej do Gitu!):
 
-```envOPENAI_API_KEY=tvůj-klíč
+```env
+OPENAI_API_KEY=tvůj-klíč
 OPENAI_BASE_URL=https://tvůj-server/v1
 PORT=5000
+```
 
 ### Spuštění
+
+```bash
+python app.py
 ```
-```bashpython app.py
-```
+
 Otevři prohlížeč na `http://localhost:5000`
 
 ---
 
 ## 🐳 Docker
 
-```bashdocker build -t giftmind .
-docker run -p 5000:5000 
--e OPENAI_API_KEY=tvůj-klíč 
--e OPENAI_BASE_URL=https://tvůj-server/v1 
-giftmind
+```bash
+docker build -t giftmind .
+docker run -p 5000:5000 \
+  -e OPENAI_API_KEY=tvůj-klíč \
+  -e OPENAI_BASE_URL=https://tvůj-server/v1 \
+  giftmind
+```
 
 ---
-````
+
 ## ⚙️ Proměnné prostředí
 
 | Proměnná | Popis | Výchozí |
@@ -71,7 +78,8 @@ giftmind
 
 ---
 
-## 🏗️ ArchitekturaGiftMind/
+## 🏗️ Architektura
+GiftMind/
 ├── app.py              # Flask backend + REST API
 ├── templates/
 │   └── index.html      # Single-page aplikace
@@ -99,4 +107,3 @@ Lze snadno přepnout na jakýkoliv jiný model změnou proměnné prostředí.
 ## 📄 Licence
 
 MIT — volně použitelné a upravitelné.
-```

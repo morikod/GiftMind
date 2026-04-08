@@ -1,89 +1,74 @@
-🧠 Labirint AI
+# 🧩 Labirint-AI
 
-Interaktivní AI generátor a řešič labyrintů s moderním webovým rozhraním
+[![License: MIT](https://img.shields.io/badge/Licence-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Status: Active](https://img.shields.io/badge/Stav-Aktivn%C3%AD-brightgreen.svg)](#)
+[![Demo](https://img.shields.io/badge/Live-Demo-blue)](https://denys-voloshyn.kurim.ithope.eu/)
 
-🏷️ Běhající štítky (Badges)
+**Labirint-AI** je inteligentní systém pro navigaci a hledání řešení, který integruje moderní algoritmy umělé inteligence pro práci v bludištích a složitých datových strukturách.
 
+---
 
+## 🚀 O projektu
 
+Tento projekt představuje interaktivní platformu, kde se schopnosti AI setkávají s klasickými logickými úlohami. Využíváme sémantické vyhledávání a vektorové reprezentace pro optimalizaci tras a analýzu struktur.
 
+**Vyzkoušet online:** [denys-voloshyn.kurim.ithope.eu](https://denys-voloshyn.kurim.ithope.eu/)
 
+### Klíčové vlastnosti:
+* **Inteligentní vyhledávání:** Využití vektorových databází pro ukládání a porovnávání tras.
+* **Vizualizace:** Přehledné zobrazení algoritmů v reálném čase.
+* **Flexibilní integrace:** Možnost připojení externích LLM (přes pluginy podobné LM Studio).
+* **Optimalizace:** Rychlé zpracování grafů a navigačních řetězců.
 
+---
 
+## 🛠 Použité technologie
 
-✨ Funkce
-🧩 Generování labyrintů – rychle a interaktivně
-🤖 Automatické řešení AI – Gemma3 model zvládá i komplexní labyrinty
-🌐 Webové rozhraní – pohodlné pro uživatele i na mobilu
-⚡ Napojení na vlastní API – plně kompatibilní s OpenAI/Gemma API
-🔌 Docker ready – snadné nasazení v kontejnerech
-🚀 Živá ukázka (Live Demo)
+* **Frontend:** HTML5, CSS3 (Moderní UI), JavaScript.
+* **Backend/AI:** Integrace s vektorovými enginy (styl ChromaDB).
+* **Deployment:** Vlastní hosting postavený na systémech správy projektů.
 
-🌐 Spusť Labirint AI online
+---
 
-🛠️ Použité technologie
-Python 3.12 – hlavní jazyk aplikace
-Flask – webový server a routování
-OpenAI SDK – integrace s LLM API
-httpx 0.27.0 – pro stabilní HTTP klient
-Docker – rychlé nasazení
-⚙️ Instalace
-1️⃣ Klonování repozitáře
-git clone https://github.com/morikod/Labirint-AI.git
-cd Labirint-AI
-2️⃣ Instalace závislostí
-pip install -r requirements.txt
-3️⃣ Nastavení proměnných prostředí
-export OPENAI_API_KEY=tvuj_klic
-export OPENAI_BASE_URL=https://kurim.ithope.eu/v1
-4️⃣ Spuštění aplikace lokálně
-python app.py
-🐳 Docker
+## 📦 Instalace a spuštění
 
-Snadné spuštění přes Docker:
+Pro lokální spuštění projektu postupujte podle následujících kroků:
 
-docker build -t labirint-ai .
-docker run -p 5000:5000 labirint-ai
-🧠 Ukázka použití API
-from openai import OpenAI
+1.  **Klonování repozitáře:**
+    ```bash
+    git clone [https://github.com/morikod/Labirint-AI.git](https://github.com/morikod/Labirint-AI.git)
+    cd Labirint-AI
+    ```
 
-client = OpenAI(
-    api_key="tvuj_klic",
-    base_url="https://kurim.ithope.eu/v1"
-)
+2.  **Nastavení prostředí:**
+    Vytvořte soubor `.env` a zadejte potřebné parametry (API klíče, porty).
 
-response = client.chat.completions.create(
-    model="gemma3:27b",
-    messages=[{"role": "user", "content": "Vyřeš tento labyrint"}]
-)
+3.  **Spuštění:**
+    Otevřete `index.html` (nebo spusťte lokální server):
+    ```bash
+    # Pokud používáte Python pro rychlý server:
+    python -m http.server 8000
+    ```
 
-print(response.choices[0].message.content)
-📁 Struktura projektu
-Labirint-AI/
-├── app.py               # hlavní aplikace
-├── requirements.txt     # závislosti
-├── templates/           # HTML šablony
-├── static/              # CSS, JS, obrázky
-└── README.md            # tento soubor
-📸 Screenshots / Demo
+---
 
+## 🧩 Integrace s ChromaDB / LM Studio
 
+Projekt podporuje rozšíření funkcionality pomocí pluginů pro lokální jazykové modely. To umožňuje:
+* Přidat "paměť" pro AI agenty procházející bludištěm.
+* Analyzovat historii průchodů pomocí RAG (Retrieval-Augmented Generation).
 
+---
 
-Tip: nahraj GIF se záznamem generování a řešení labyrintu pro profesionálnější vzhled.
+## 🤝 Kontakt
 
-⚠️ Známé problémy
-httpx >= 0.28 způsobuje chybu proxies
-✅ Řešení: použít httpx==0.27.0
-📜 Licence
+Pokud máte dotazy nebo návrhy na vylepšení projektu:
 
-MIT © Denys Voloshyn
+* **Autor:** Denys Voloshyn
+* **Web:** [ithope.eu](https://denys-voloshyn.kurim.ithope.eu/)
+* **GitHub:** [@morikod](https://github.com/morikod)
 
-👨‍💻 Autor
+---
 
-Denys Voloshyn – Portfolio / Web
-
-⭐ Inspirace
-
-Projekt inspirován moderními AI nástroji a RAG systémy (ChromaDB Plugin
-)
+### Licence
+Tento projekt je šířen pod licencí **MIT**. Podrobnosti naleznete v souboru `LICENSE`.

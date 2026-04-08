@@ -1,72 +1,100 @@
-# 🧩 GiftMind
+# 🎁 GiftMind — AI průvodce výběrem dárků
 
-[![Status: Active](https://img.shields.io/badge/Stav-Aktivn%C3%AD-brightgreen.svg)](#)
-[![Demo](https://img.shields.io/badge/Live-Demo-blue)](https://denys-voloshyn.kurim.ithope.eu/)
-
-**Labirint-AI** je inteligentní systém pro navigaci a hledání řešení, který integruje moderní algoritmy umělé inteligence pro práci v bludištích a složitých datových strukturách.
+> Chytré doporučení dárků na základě profilu příjemce, jeho zájmů a vzpomínek.  
+> Postaveno na lokálním LLM (Gemma 3 27B) bez závislosti na externích AI službách.
 
 ---
 
-## 🚀 O projektu
+## ✨ Co umí
 
-Tento projekt představuje interaktivní platformu, kde se schopnosti AI setkávají s klasickými logickými úlohami. Využíváme sémantické vyhledávání a vektorové reprezentace pro optimalizaci tras a analýzu struktur.
-
-
-
-### Klíčové vlastnosti:
-* **Inteligentní vyhledávání:** Využití vektorových databází pro ukládání a porovnávání tras.
-* **Vizualizace:** Přehledné zobrazení algoritmů v reálném čase.
-* **Flexibilní integrace:** Možnost připojení externích LLM (přes pluginy podobné LM Studio).
-* **Optimalizace:** Rychlé zpracování grafů a navigačních řetězců.
-
----
-
-## 🛠 Použité technologie
-
-* **Frontend:** HTML5, CSS3 (Moderní UI), JavaScript.
-* **Backend/AI:** Integrace s vektorovými enginy (styl ChromaDB).
-* **Deployment:** Vlastní hosting postavený na systémech správy projektů.
+| Funkce | Popis |
+|---|---|
+| ⚡ **Rychlý výběr** | Popis situace → 3 konkrétní tipy na dárek během sekund |
+| 👤 **Profily příjemců** | Uložení zájmů, vztahu, věku a poznámek pro opakované použití |
+| 🔒 **Soukromí** | Každý uživatel vidí pouze svoje profily a historii (izolace podle IP) |
+| 💬 **Konverzační AI** | Přirozený dialog, AI se ptá a upřesňuje |
+| 📚 **Historie dárků** | Přehled všech darovaných věcí s hodnocením |
+| 🗑️ **Mazání** | Možnost smazat profil nebo konkrétní dárek |
+| 🌙 **Dark UI** | Moderní tmavý design s animacemi |
 
 ---
 
-## 📦 Instalace a spuštění
+## 🚀 Spuštění (lokálně)
 
-Pro lokální spuštění projektu postupujte podle následujících kroků:
+### Požadavky
+- Python 3.12+
+- Přístup k OpenAI-compatible API (nebo lokální Ollama)
 
-1.  **Klonování repozitáře:**
-    ```bash
-    git clone [https://github.com/morikod/Labirint-AI.git](https://github.com/morikod/Labirint-AI.git)
-    cd Labirint-AI
-    ```
+### Instalace
 
-2.  **Nastavení prostředí:**
-    Vytvořte soubor `.env` a zadejte potřebné parametry (API klíče, porty).
+```bashgit clone https://github.com/morikod/GiftMind.git
+cd GiftMind
+pip install -r requirements.txt
 
-3.  **Spuštění:**
-    Otevřete `index.html` (nebo spusťte lokální server):
-    ```bash
-    # Pokud používáte Python pro rychlý server:
-    python -m http.server 8000
-    ```
+### Konfigurace
 
----
+Vytvoř soubor `.env` (nikdy jej nepřidávej do Gitu!):
 
-## 🧩 Integrace s ChromaDB / LM Studio
+```envOPENAI_API_KEY=tvůj-klíč
+OPENAI_BASE_URL=https://tvůj-server/v1
+PORT=5000
 
-Projekt podporuje rozšíření funkcionality pomocí pluginů pro lokální jazykové modely. To umožňuje:
-* Přidat "paměť" pro AI agenty procházející bludištěm.
-* Analyzovat historii průchodů pomocí RAG (Retrieval-Augmented Generation).
+### Spuštění
+
+```bashpython app.py
+
+Otevři prohlížeč na `http://localhost:5000`
 
 ---
 
-## 🤝 Kontakt
+## 🐳 Docker
 
-Pokud máte dotazy nebo návrhy na vylepšení projektu:
-
-
-
-* **GitHub:** [@morikod](https://github.com/morikod)
+```bashdocker build -t giftmind .
+docker run -p 5000:5000 
+-e OPENAI_API_KEY=tvůj-klíč 
+-e OPENAI_BASE_URL=https://tvůj-server/v1 
+giftmind
 
 ---
 
+## ⚙️ Proměnné prostředí
 
+| Proměnná | Popis | Výchozí |
+|---|---|---|
+| `OPENAI_API_KEY` | API klíč pro LLM | — (povinné) |
+| `OPENAI_BASE_URL` | URL OpenAI-compatible API | `https://api.openai.com/v1` |
+| `PORT` | Port aplikace | `5000` |
+
+> ⚠️ **Nikdy nevkládej API klíč přímo do kódu ani do Gitu.**  
+> Vždy používej proměnné prostředí nebo tajný trezor.
+
+---
+
+## 🏗️ ArchitekturaGiftMind/
+├── app.py              # Flask backend + REST API
+├── templates/
+│   └── index.html      # Single-page aplikace
+├── static/
+│   ├── style.css       # Dark theme UI
+│   └── script.js       # Frontend logika
+├── requirements.txt
+└── Dockerfile
+
+### Soukromí uživatelů
+
+Aplikace nepoužívá přihlášení ani cookies.  
+Každý uživatel je identifikován **anonymním hashem IP adresy** (SHA-256, prvních 16 znaků).  
+Samotná IP adresa se nikam neukládá.
+
+---
+
+## 🧠 AI model
+
+Aplikace používá **Gemma 3 27B** přes OpenAI-compatible API.  
+Lze snadno přepnout na jakýkoliv jiný model změnou proměnné prostředí.
+
+---
+
+## 📄 Licence
+
+MIT — volně použitelné a upravitelné.

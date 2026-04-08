@@ -1,6 +1,7 @@
 import os
 import json
 import uuid
+import hashlib
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 from openai import OpenAI
@@ -10,11 +11,11 @@ app = Flask(__name__)
 API_KEY = os.environ.get("OPENAI_API_KEY", "")
 BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://kurim.ithope.eu/v1")
 MODEL = "gemma3:27b"
-DATA_FILE = "/tmp/labirint_data.json"
+DATA_FILE = "/tmp/giftmind_data.json"
 
 client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
 
-SYSTEM_PROMPT = """Jsi Labyrint, přátelský AI asistent pro výběr dárků.
+SYSTEM_PROMPT = """Jsi GiftMind, přátelský AI asistent pro výběr dárků.
 Pomáháš najít ideální dárek tím, že kladeš chytré otázky.
 
 Pravidla:
@@ -32,6 +33,13 @@ Pravidla:
 
 - Po navržení dárků se zeptej: "Který z návrhů se ti líbí nejvíc? Nebo chceš něco upřesnit?"
 - Pokud máš k dispozici profil příjemce, využij ta data co nejvíc"""
+
+
+def get_user_id():
+    """Anonymní ID uživatele z IP adresy (hash, nikdy se neukládá samotná IP)."""
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr or '0.0.0.0')
+    ip = ip.split(',')[0].strip()
+    return hashlib.sha256(ip.encode()).hexdigest()[:16]
 
 
 def load_data():
@@ -87,9 +95,11 @@ def chat():
 
 @app.route("/api/profile", methods=["POST"])
 def save_profile():
+    uid = get_user_id()
     data = load_data()
     profile = request.get_json()
     profile["id"] = str(uuid.uuid4())
+    profile["owner"] = uid
     profile["created_at"] = datetime.now().isoformat()
     data["profiles"].append(profile)
     save_data(data)
@@ -98,15 +108,38 @@ def save_profile():
 
 @app.route("/api/profiles", methods=["GET"])
 def get_profiles():
+    uid = get_user_id()
     data = load_data()
-    return jsonify(data["profiles"])
+    my = [p for p in data["profiles"] if p.get("owner") == uid]
+    return jsonify(my)
+
+
+@app.route("/api/profile/<profile_id>", methods=["DELETE"])
+def delete_profile(profile_id):
+    uid = get_user_id()
+    data = load_data()
+    before = len(data["profiles"])
+    data["profiles"] = [
+        p for p in data["profiles"]
+        if not (p["id"] == profile_id and p.get("owner") == uid)
+    ]
+    # smaž i dárky tohoto profilu patřící tomuto uživateli
+    data["gifts"] = [
+        g for g in data["gifts"]
+        if not (g.get("profile_id") == profile_id and g.get("owner") == uid)
+    ]
+    save_data(data)
+    deleted = before > len(data["profiles"])
+    return jsonify({"success": deleted})
 
 
 @app.route("/api/gift", methods=["POST"])
 def save_gift():
+    uid = get_user_id()
     data = load_data()
     gift = request.get_json()
     gift["id"] = str(uuid.uuid4())
+    gift["owner"] = uid
     gift["created_at"] = datetime.now().isoformat()
     data["gifts"].append(gift)
     save_data(data)
@@ -115,23 +148,23 @@ def save_gift():
 
 @app.route("/api/gifts", methods=["GET"])
 def get_gifts():
+    uid = get_user_id()
     data = load_data()
     profile_id = request.args.get("profile_id")
-    gifts = data["gifts"]
+    gifts = [g for g in data["gifts"] if g.get("owner") == uid]
     if profile_id:
         gifts = [g for g in gifts if g.get("profile_id") == profile_id]
     return jsonify(gifts)
 
 
-@app.route("/api/gift/<gift_id>/rate", methods=["POST"])
-def rate_gift(gift_id):
+@app.route("/api/gift/<gift_id>", methods=["DELETE"])
+def delete_gift(gift_id):
+    uid = get_user_id()
     data = load_data()
-    body = request.get_json()
-    for gift in data["gifts"]:
-        if gift["id"] == gift_id:
-            gift["my_rating"] = body.get("rating", 0)
-            gift["my_comment"] = body.get("comment", "")
-            break
+    data["gifts"] = [
+        g for g in data["gifts"]
+        if not (g["id"] == gift_id and g.get("owner") == uid)
+    ]
     save_data(data)
     return jsonify({"success": True})
 

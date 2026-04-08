@@ -79,6 +79,7 @@ docker run -p 5000:5000 \
 ---
 
 ## 🏗️ Architektura
+```
 GiftMind/
 ├── app.py              # Flask backend + REST API
 ├── templates/
@@ -88,7 +89,7 @@ GiftMind/
 │   └── script.js       # Frontend logika
 ├── requirements.txt
 └── Dockerfile
-
+```
 ### Soukromí uživatelů
 
 Aplikace nepoužívá přihlášení ani cookies.  

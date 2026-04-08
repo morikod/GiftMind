@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Labyrint – AI průvodce dárky</title>
-  <link rel="stylesheet" href="/static/css/style.css" />
+  <title>GiftMind – AI průvodce dárky</title>
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
 
@@ -22,7 +22,7 @@
         <div class="avatar-ring ring2"></div>
         <div class="avatar-core">🎁</div>
       </div>
-      <h1 class="logo-title">Labyrint</h1>
+      <h1 class="logo-title">GiftMind</h1>
       <p class="logo-sub">AI průvodce výběrem dárků</p>
       <div class="typewriter-box">
         <p id="greeting-text" class="greeting"></p>
@@ -45,13 +45,13 @@
 
       <aside id="sidebar" class="sidebar">
         <div class="sidebar-header">
-          <span>🎁 Labyrint</span>
+          <span>🎁 GiftMind</span>
           <button class="btn-icon" onclick="App.toggleSidebar()">✕</button>
         </div>
         <button class="btn btn-outline sidebar-btn" onclick="App.showScreen('screen-profile')">
           + Nový profil
         </button>
-        <div class="sidebar-section-label">Uložené profily</div>
+        <div class="sidebar-section-label">Moje profily</div>
         <div id="profile-list" class="profile-list"></div>
         <div class="sidebar-footer">
           <button class="btn btn-ghost sidebar-btn" onclick="App.showScreen('screen-history')">
@@ -74,17 +74,13 @@
                   onclick="App.showSaveGift()">💾 Uložit dárek</button>
         </header>
 
-        <div id="chat-messages" class="chat-messages">
-          <!-- zprávy se vkládají sem -->
-        </div>
+        <div id="chat-messages" class="chat-messages"></div>
 
         <div class="chat-input-row">
           <textarea id="chat-input" class="chat-input" rows="1"
             placeholder="Napište zprávu…"
             onkeydown="App.handleKey(event)"></textarea>
-          <button class="btn btn-primary btn-send" onclick="App.sendMessage()">
-            ➤
-          </button>
+          <button class="btn btn-primary btn-send" onclick="App.sendMessage()">➤</button>
         </div>
       </main>
     </div>
@@ -140,7 +136,7 @@
       <div class="form-group">
         <label>Poznámky / vzpomínky</label>
         <textarea id="p-notes" rows="3"
-          placeholder="Např. Miluje hory, letos absolvoval kurz keramiky, sní o cestě do Japonska…"></textarea>
+          placeholder="Např. Miluje hory, letos absolvoval kurz keramiky…"></textarea>
       </div>
 
       <button class="btn btn-primary btn-full" onclick="App.saveProfile()">
@@ -202,6 +198,20 @@
     </div>
   </div>
 
-  <script src="/static/js/script.js"></script>
+  <!-- ======= MODAL: Potvrdit smazání ======= -->
+  <div id="modal-confirm" class="modal hidden">
+    <div class="modal-box">
+      <h3>🗑️ Smazat profil?</h3>
+      <p style="color:var(--text2);margin:12px 0">
+        Tato akce je nevratná. Profil a všechny jeho dárky budou smazány.
+      </p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="App.closeConfirm()">Zrušit</button>
+        <button class="btn btn-danger" onclick="App.confirmDelete()">Smazat</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/script.js"></script>
 </body>
 </html>

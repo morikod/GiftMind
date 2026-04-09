@@ -320,17 +320,19 @@ const App = (() => {
     });
   }
 
+  // ⭐ ИЗМЕНЕНА — теперь передаёт interests профиля
   async function confirmSaveGift() {
     const name = document.getElementById('sg-name').value.trim();
     if (!name) { alert('Zadej název dárku.'); return; }
     const gift = {
       name,
-      occasion: document.getElementById('sg-occasion').value,
-      budget: document.getElementById('sg-budget').value || 0,
-      my_rating: starRating,
-      my_comment: document.getElementById('sg-comment').value,
-      profile_id: activeProfile?.id || null,
-      profile_name: activeProfile?.name || 'Bez profilu',
+      occasion:           document.getElementById('sg-occasion').value,
+      budget:             document.getElementById('sg-budget').value || 0,
+      my_rating:          starRating,
+      my_comment:         document.getElementById('sg-comment').value,
+      profile_id:         activeProfile?.id || null,
+      profile_name:       activeProfile?.name || 'Bez profilu',
+      profile_interests:  activeProfile?.interests || '',  // ← передаём интересы
     };
     try {
       await apiFetch('/api/gift', {

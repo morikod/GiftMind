@@ -234,11 +234,37 @@ const App = (() => {
     messages = [];
   }
 
+  // Парсим подарки из ответа AI
+  function extractGifts(text) {
+    const gifts = [];
+    const regex = /🎁\s+\*\*(.+?)\*\*/g;
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      gifts.push(match[1].trim());
+    }
+    return gifts;
+  }
+
   function appendAiMessage(text) {
     const box = document.getElementById('chat-messages');
     const div = document.createElement('div');
     div.className = 'msg ai';
-    div.innerHTML = `<div class="msg-avatar">🎁</div><div class="msg-bubble">${formatText(text)}</div>`;
+
+    const gifts = extractGifts(text);
+    let buttonsHtml = '';
+
+    if (gifts.length > 0) {
+      buttonsHtml = '<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">';
+      gifts.forEach(giftName => {
+        const safe = escAttr(giftName);
+        buttonsHtml += `<button class="btn-chat-small" style="text-align:left;padding:6px 12px"
+          onclick="App.showSaveGift('${safe}')">💾 Uložit: ${escHtml(giftName)}</button>`;
+      });
+      buttonsHtml += '</div>';
+    }
+
+    div.innerHTML = `<div class="msg-avatar">🎁</div>
+      <div class="msg-bubble">${formatText(text)}${buttonsHtml}</div>`;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
   }
@@ -268,6 +294,21 @@ const App = (() => {
     if (el) el.remove();
   }
 
+  // Сохраняем последние сообщения в базу
+  async function saveHistoryToDB() {
+    if (!messages.length) return;
+    try {
+      await apiFetch('/api/history/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: messages.slice(-10),
+          profile_id: activeProfile?.id || null,
+        }),
+      });
+    } catch {}
+  }
+
   async function sendMessage() {
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
@@ -287,6 +328,7 @@ const App = (() => {
       removeTyping();
       appendAiMessage(data.reply);
       messages.push({ role: 'assistant', content: data.reply });
+      saveHistoryToDB();
     } catch {
       removeTyping();
       appendAiMessage('Omlouvám se, nastala chyba připojení. Zkus to prosím znovu.');
@@ -300,10 +342,11 @@ const App = (() => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   }
 
-  function showSaveGift() {
+  // Принимает необязательный параметр giftName
+  function showSaveGift(giftName = '') {
     starRating = 0;
     renderStars();
-    document.getElementById('sg-name').value = '';
+    document.getElementById('sg-name').value = giftName;
     document.getElementById('sg-comment').value = '';
     document.getElementById('modal-save-gift').classList.remove('hidden');
   }
@@ -320,19 +363,18 @@ const App = (() => {
     });
   }
 
-  // ⭐ ИЗМЕНЕНА — теперь передаёт interests профиля
   async function confirmSaveGift() {
     const name = document.getElementById('sg-name').value.trim();
     if (!name) { alert('Zadej název dárku.'); return; }
     const gift = {
       name,
-      occasion:           document.getElementById('sg-occasion').value,
-      budget:             document.getElementById('sg-budget').value || 0,
-      my_rating:          starRating,
-      my_comment:         document.getElementById('sg-comment').value,
-      profile_id:         activeProfile?.id || null,
-      profile_name:       activeProfile?.name || 'Bez profilu',
-      profile_interests:  activeProfile?.interests || '',  // ← передаём интересы
+      occasion:          document.getElementById('sg-occasion').value,
+      budget:            document.getElementById('sg-budget').value || 0,
+      my_rating:         starRating,
+      my_comment:        document.getElementById('sg-comment').value,
+      profile_id:        activeProfile?.id || null,
+      profile_name:      activeProfile?.name || 'Bez profilu',
+      profile_interests: activeProfile?.interests || '',
     };
     try {
       await apiFetch('/api/gift', {
